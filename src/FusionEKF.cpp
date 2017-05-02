@@ -30,7 +30,7 @@ FusionEKF::FusionEKF() {
   R_radar_ << 0.09, 0, 0,
         0, 0.0009, 0,
         0, 0, 0.09;
-  
+
   //measurement matrix - laser
 	H_laser_ << 1, 0, 0, 0,
 			  0, 1, 0, 0;
@@ -41,22 +41,6 @@ FusionEKF::FusionEKF() {
     * Set the process and measurement noises
   */
 
-	//the initial transition matrix F_
-	/* version anterior
-  ekf_.F_ = MatrixXd(4, 4);
-	ekf_.F_ << 1, 0, 1, 0,
-			  0, 1, 0, 1,
-			  0, 0, 1, 0,
-			  0, 0, 0, 1;*/  
-
-	//state covariance matrix P_
-  /* version anterior
-	ekf_.P_ = MatrixXd(4, 4);
-	ekf_.P_ << 1, 0, 0, 0,
-			  0, 1, 0, 0,
-			  0, 0, 1000, 0,
-			  0, 0, 0, 1000;*/
-
 	VectorXd x = VectorXd(4);
 	MatrixXd P_ = MatrixXd(4,4);
 	P_ = P_.Identity(4,4) * 1000;
@@ -64,7 +48,7 @@ FusionEKF::FusionEKF() {
 	F_ = F_.Identity(4,4);
 	MatrixXd Q_ = MatrixXd(4,4);
 	Q_ = Q_.Zero(4, 4);
-  ekf_.Init(x, P_, F_, H_laser_, R_laser_, Q_);           
+    ekf_.Init(x, P_, F_, H_laser_, R_laser_, Q_);
 }
 
 /**
@@ -98,9 +82,9 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       float phi = measurement_pack.raw_measurements_(1);
       float rho_dot = measurement_pack.raw_measurements_(2);
       float px = rho * cos(phi);
-      float py = rho * sin(phi);      
-      float vx = 0.0;//rho_dot * cos(phi);
-      float vy = 0.0;//rho_dot * sin(phi);
+      float py = rho * sin(phi);
+      float vx = 0.0;
+      float vy = 0.0;
       ekf_.x_ << px, py, vx, vy;
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
@@ -111,9 +95,9 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       float py = measurement_pack.raw_measurements_(1);
       ekf_.x_ << px, py, 0, 0;
     }
-    
+
     previous_timestamp_ = measurement_pack.timestamp_;
-    
+
     // done initializing, no need to predict or update
     is_initialized_ = true;
     return;
@@ -142,24 +126,21 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 	//Modify the F matrix so that the time is integrated
 	ekf_.F_(0, 2) = dt;
 	ekf_.F_(1, 3) = dt;
-  
-  //set the acceleration noise components
-  float noise_ax = 9.0;
-  float noise_ay = 9.0;  
+
+    //set the acceleration noise components
+    float noise_ax = 9.0;
+    float noise_ay = 9.0;
 
 	//set the process covariance matrix Q
-  /*version anterior
-	ekf_.Q_ = MatrixXd(4, 4);
-  */
-	ekf_.Q_ <<  dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
+  	ekf_.Q_ <<  dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
 			   0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
 			   dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
 			   0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
-  
+
   if (dt > 0.0001) {
     ekf_.Predict();
   }
-  
+
 
   /*****************************************************************************
    *  Update
